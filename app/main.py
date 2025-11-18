@@ -6,6 +6,8 @@ import streamlit as st
 import sqlite3
 import json
 from dotenv import load_dotenv
+import io
+from pathlib import Path
 
 from services.llm import ask_clarifying_questions, generate_user_stories, style_check_stories
 from services.export import export_markdown, export_csv
@@ -75,6 +77,40 @@ def get_last_runs(limit=5):
         conn.close()
 
 
+def extract_text_from_pdf(pdf_file) -> str:
+    """Extract text from a PDF file."""
+    try:
+        from pypdf import PdfReader
+        reader = PdfReader(io.BytesIO(pdf_file.read()))
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
+        return text.strip()
+    except Exception as e:
+        raise ValueError(f"Failed to extract text from PDF: {e}")
+
+
+def extract_text_from_txt(txt_file) -> str:
+    """Extract text from a TXT file."""
+    try:
+        content = txt_file.read().decode('utf-8')
+        return content.strip()
+    except Exception as e:
+        raise ValueError(f"Failed to read TXT file: {e}")
+
+
+def extract_text_from_document(uploaded_file) -> str:
+    """Extract text from uploaded document (PDF or TXT)."""
+    file_ext = Path(uploaded_file.name).suffix.lower()
+    
+    if file_ext == '.pdf':
+        return extract_text_from_pdf(uploaded_file)
+    elif file_ext == '.txt':
+        return extract_text_from_txt(uploaded_file)
+    else:
+        raise ValueError(f"Unsupported file format: {file_ext}. Only PDF and TXT are supported.")
+
+
 st.set_page_config(page_title="PM Agent", page_icon="🧩", layout="wide")
 st.title("🧩 Product Manager Agent")
 
@@ -104,7 +140,33 @@ with tab1:
         index=0
     )
     
-    brd_text = st.text_area("Paste BRD", height=250)
+    st.subheader("📄 Upload Document or Paste BRD")
+    
+    col_upload, col_paste = st.columns(2)
+    
+    with col_upload:
+        st.write("**Upload Document**")
+        uploaded_file = st.file_uploader(
+            "Upload BRD (PDF or TXT)",
+            type=["pdf", "txt"],
+            key="brd_uploader"
+        )
+        
+        if uploaded_file:
+            try:
+                extracted_text = extract_text_from_document(uploaded_file)
+                st.session_state.brd_text = extracted_text
+                st.success(f"Extracted text from {uploaded_file.name}")
+            except Exception as e:
+                st.error(f"❌ Error: {e}")
+    
+    
+    brd_text = st.text_area(
+        "BRD Content",
+        value=st.session_state.brd_text,
+        height=250,
+        help="Paste your BRD text or upload a document above"
+    )
 
     if st.button("Generate 8 Clarifying Questions"):
         if not brd_text.strip():
@@ -240,4 +302,3 @@ with tab3:
                     with st.expander("📋 Debug Info"):
                         st.write(f"**Error Details:**\n{st.session_state.last_error}")
 
-# Database already initialized above

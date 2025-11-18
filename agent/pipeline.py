@@ -8,11 +8,10 @@ from .schema import ClarifyOutput, StoryOutput
 
 load_dotenv()
 
-# ---- OpenRouter configuration ----
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_KEY:
-    raise ValueError("❌ OPENROUTER_API_KEY missing in .env")
+    raise ValueError("OPENROUTER_API_KEY missing in .env")
 
 os.environ["OPENAI_API_KEY"] = OPENROUTER_KEY
 os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
@@ -39,8 +38,8 @@ def _call_llm(model_name: str, system: str, prompt: str) -> str:
 
 
 SYSTEM_PM = (
-    "You are a pragmatic Product Manager. "
-    "Produce concise, unambiguous JSON only. No explanations."
+    "You are a pragmatic Product Manager."
+    "Produce concise,unambiguous JSON only. No explanations."
 )
 
 def ask_clarifying_questions(brd_text: str):
