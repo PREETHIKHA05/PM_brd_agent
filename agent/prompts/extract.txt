@@ -1,0 +1,20 @@
+You MUST output EXACTLY this JSON structure:
+
+{
+  "summary": {
+     "key_goals": [...],
+     "primary_actors": [...],
+     "main_flows": [...],
+     "edge_cases": [...],
+     "constraints": [...]
+  },
+  "suggestions": [
+      { "id": 1, "category": "...", "comment": "...", "status": "pending" }
+  ]
+}
+
+STRICT RULES:
+- NO text outside JSON
+- NO explanation
+- NO second JSON block
+- NO natural language
