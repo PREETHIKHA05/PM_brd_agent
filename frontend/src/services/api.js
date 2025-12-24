@@ -9,7 +9,6 @@ const api = axios.create({
     },
 });
 
-// Request interceptor to add token to headers
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -18,19 +17,15 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Response interceptor to handle token expiration
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Token expired or invalid
             const errorDetail = error.response?.data?.detail;
             if (errorDetail && (errorDetail.includes('expired') || errorDetail.includes('Invalid'))) {
-                // Clear local storage
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
 
-                // Redirect to login page
                 window.location.href = '/login';
             }
         }

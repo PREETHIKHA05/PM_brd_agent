@@ -16,7 +16,6 @@ except Exception:
         def model_validate(data):
             return data
 
-# Load .env from root (find_dotenv) and from agent directory
 load_dotenv(find_dotenv())
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
@@ -104,19 +103,15 @@ def force_suggestion_dicts(suggestions_raw):
 
 def safe_json_extract(raw: str):
     """Extract and parse JSON from a string that may contain markdown or extra text."""
-    # Remove markdown code blocks
     cleaned = re.sub(r"```(?:json)?\s*", "", raw)
     cleaned = re.sub(r"```", "", cleaned).strip()
     
-    # Try parsing the cleaned string directly
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
         pass
     
-    # Try to find JSON object using index-based extraction (more reliable than regex)
     try:
-        # Find the first { and last } to get the complete JSON object
         start_idx = cleaned.find('{')
         end_idx = cleaned.rfind('}')
         
@@ -126,7 +121,6 @@ def safe_json_extract(raw: str):
     except json.JSONDecodeError:
         pass
     
-    # Try to find JSON array
     try:
         start_idx = cleaned.find('[')
         end_idx = cleaned.rfind(']')
@@ -137,14 +131,12 @@ def safe_json_extract(raw: str):
     except json.JSONDecodeError:
         pass
     
-    # Try removing trailing commas and parsing again
     try:
         fixed = re.sub(r",\s*([\]}])", r"\1", cleaned)
         return json.loads(fixed)
     except json.JSONDecodeError:
         pass
     
-    # If all else fails, show more of the response for debugging
     raise ValueError(
         f"No valid JSON found in response.\n"
         f"First 300 chars: {cleaned[:300]}...\n"
@@ -162,7 +154,6 @@ def review_brd(brd_text: str):
         suggestions = force_suggestion_dicts(suggestions)
         return suggestions
     
-    # Using OpenAI/OpenRouter
     print("DEBUG: Using OpenAI/OpenRouter for review_brd")
     prompt = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "review.txt"))
     prompt = prompt.replace("{BRD_TEXT}", brd_text)
@@ -195,14 +186,12 @@ def ask_clarifying_questions(brd_text: str):
           ]
         }}
 """
-        # Use Llama 3 8B Instruct on Bedrock
         bedrock_model_id = "meta.llama3-8b-instruct-v1:0"
         raw = client.invoke_model(prompt, bedrock_model_id)
         
         parsed = safe_json_extract(raw)
         return parsed.get("questions", [])
     
-    # Using OpenAI/OpenRouter
     prompt = f"""Generate 8 clarifying questions for the following BRD.
     
     BRD:
@@ -263,7 +252,6 @@ Return ONLY the edited BRD text. No explanations, no meta-commentary, no markdow
     if USE_BEDROCK:
         from .bedrock_client import get_bedrock_client
         client = get_bedrock_client()
-        # Use Llama 3 8B Instruct on Bedrock
         bedrock_model_id = "meta.llama3-8b-instruct-v1:0" 
         updated_brd = client.invoke_model(prompt, bedrock_model_id)
     else:
@@ -322,11 +310,9 @@ Return ONLY valid JSON in this format:
 
 Generate 1-3 epics, 5-12 user stories, and relevant NFRs.
 """
-        # Use Llama 3 8B Instruct on Bedrock
         bedrock_model_id = "meta.llama3-8b-instruct-v1:0"
         return client.invoke_model(prompt, bedrock_model_id)
     
-    # Using OpenAI/OpenRouter - Format answers for the prompt
     answers_text = "\n".join([f"Q: {q}\nA: {a}" for q, a in answers.items()])
     
     prompt = f"""Generate user stories based on the following BRD and answers to clarifying questions.

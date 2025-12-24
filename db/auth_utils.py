@@ -22,7 +22,6 @@ def create_user(db: Session, username: str, email: str, password: str) -> Option
     Create a new user with hashed password.
     Returns None if username or email already exists.
     """
-    # Check if user already exists
     existing_user = db.query(User).filter(
         (User.username == username) | (User.email == email)
     ).first()
@@ -30,7 +29,6 @@ def create_user(db: Session, username: str, email: str, password: str) -> Option
     if existing_user:
         return None
     
-    # Create new user
     hashed_pw = hash_password(password)
     new_user = User(
         username=username,

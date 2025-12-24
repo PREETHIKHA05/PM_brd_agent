@@ -46,9 +46,9 @@ class Run(Base):
     id = Column(Integer, primary_key=True)
     brd_id = Column(Integer, ForeignKey("brds.id"), nullable=False)
     risk_review_id = Column(Integer, ForeignKey("risk_reviews.id"))
-    questions = Column(JSON)      # list of questions
-    answers = Column(JSON)        # dict {Qid: answer}
-    stories = Column(JSON)        # final stories JSON
+    questions = Column(JSON)      
+    answers = Column(JSON)        
+    stories = Column(JSON)        
 
     brd = relationship("BRD", back_populates="runs")
     risk_review = relationship("RiskReview", back_populates="runs")
